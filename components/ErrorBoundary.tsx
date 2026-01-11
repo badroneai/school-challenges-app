@@ -15,15 +15,8 @@ interface State {
  * log those errors, and display a fallback UI instead of the component tree that crashed.
  */
 class ErrorBoundary extends React.Component<Props, State> {
-  // Fix: Explicitly declare props and state to ensure they are correctly typed and recognized by the compiler,
-  // resolving the error "Property 'props' does not exist on type 'ErrorBoundary'".
-  public props: Props;
-  public state: State;
-
   constructor(props: Props) {
     super(props);
-    // Explicitly assigning props and initializing state to satisfy TypeScript property existence checks.
-    this.props = props;
     this.state = {
       hasError: false,
       error: null,
