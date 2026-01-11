@@ -1,0 +1,40 @@
+
+{
+  "indexes": [
+    {
+      "collectionGroup": "challenges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "school_id", "order": "ASCENDING" },
+        { "fieldPath": "created_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "internal_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "school_id", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "event_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "agency_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "created_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "read", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

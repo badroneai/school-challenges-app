@@ -1,0 +1,129 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- وظائف مساعدة (Helpers) ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && getUserData().role == 'SUPER_ADMIN';
+    }
+
+    function isSchoolCoordinator(schoolId) {
+      let user = getUserData();
+      return isSignedIn() && user.role == 'SCHOOL_COORDINATOR' && user.school_id == schoolId;
+    }
+
+    function isEntityManager(agencyId) {
+      let user = getUserData();
+      return isSignedIn() && user.role == 'ENTITY_MANAGER' && user.agency_id == agencyId;
+    }
+
+    // التحقق من أن البيانات المدخلة لا تحتوي على تعديل لحقول محمية
+    function isFieldUnchanged(field) {
+      return !(field in request.resource.data) || request.resource.data[field] == resource.data[field];
+    }
+
+    // التحقق من صحة نصوص المدخلات
+    function isValidString(val, min, max) {
+      return val is string && val.size() >= min && val.size() <= max;
+    }
+
+    // --- قواعد المجموعات ---
+
+    // 1. المستخدمين
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      // الأدمن فقط ينشئ ويعدل الأدوار، المستخدم يعدل اسمه فقط
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (request.auth.uid == userId && isFieldUnchanged('role') && isFieldUnchanged('school_id') && isFieldUnchanged('agency_id'));
+      allow delete: if isSuperAdmin();
+    }
+    
+    // 2. الإشعارات
+    match /notifications/{notifId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // مسموح فقط بتحديث حقل "read"
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid 
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn(); // النظام أو الأدمن ينشئ الإشعار
+    }
+    
+    // 3. المدارس والجهات
+    match /schools/{schoolId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+    
+    match /agencies/{agencyId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+
+    // 4. التحديات
+    match /challenges/{challengeId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+    
+    // 5. المشاركات في التحديات (Submissions)
+    match /submissions/{submissionId} {
+      allow read: if isSignedIn() && (isSchoolCoordinator(resource.data.school_id) || isSuperAdmin());
+      allow create: if isSignedIn() 
+                    && isSchoolCoordinator(request.resource.data.school_id)
+                    && request.resource.data.student_count_participated > 0
+                    && isValidString(request.resource.data.evidence_notes, 5, 1000);
+      allow update: if isSignedIn() && (isSchoolCoordinator(resource.data.school_id) || isSuperAdmin())
+                    && isFieldUnchanged('school_id') && isFieldUnchanged('challenge_id');
+      allow delete: if isSuperAdmin();
+    }
+
+    // 6. الفعاليات الداخلية (Internal Events)
+    match /internal_events/{eventId} {
+      allow read: if isSignedIn() && (isSchoolCoordinator(resource.data.school_id) || isSuperAdmin());
+      allow create: if isSignedIn() 
+                    && isSchoolCoordinator(request.resource.data.school_id)
+                    && isValidString(request.resource.data.title, 3, 100);
+      allow update: if isSignedIn() && (isSchoolCoordinator(resource.data.school_id) || isSuperAdmin())
+                    && isFieldUnchanged('school_id');
+      allow delete: if isSuperAdmin() || (isSignedIn() && isSchoolCoordinator(resource.data.school_id) && resource.data.status == 'draft');
+    }
+
+    // 7. طلبات الجهات (Event Requests)
+    match /event_requests/{requestId} {
+      // المدرسة ترى طلباتها، والجهة ترى ما هو موجه لها
+      allow read: if isSignedIn() && (
+        isSchoolCoordinator(resource.data.school_id) || 
+        isEntityManager(resource.data.agency_id) || 
+        isSuperAdmin()
+      );
+      allow create: if isSignedIn() 
+                    && isSchoolCoordinator(request.resource.data.school_id)
+                    && request.resource.data.agency_id != null;
+      allow update: if isSignedIn() && (
+        isSchoolCoordinator(resource.data.school_id) || 
+        isEntityManager(resource.data.agency_id) || 
+        isSuperAdmin()
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // 8. المبادرات (Initiatives)
+    match /initiatives/{initiativeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && (isEntityManager(request.resource.data.agency_id) || isSuperAdmin());
+      allow update: if isSignedIn() && (isEntityManager(resource.data.agency_id) || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+  }
+}

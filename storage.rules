@@ -1,0 +1,25 @@
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+    
+    // Allow coordinators to upload evidence only for their own school
+    match /schools/{schoolId}/submissions/{submissionId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null 
+                    && getUserData(request.auth.uid).school_id == schoolId;
+    }
+
+    // Allow coordinators to upload internal event photos (Added)
+    match /schools/{schoolId}/internal_events/{eventId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null 
+                    && getUserData(request.auth.uid).school_id == schoolId;
+    }
+  }
+}
