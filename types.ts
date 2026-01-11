@@ -1,6 +1,4 @@
 
-import { Timestamp } from 'firebase/firestore';
-
 export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
   SCHOOL_COORDINATOR = 'SCHOOL_COORDINATOR',

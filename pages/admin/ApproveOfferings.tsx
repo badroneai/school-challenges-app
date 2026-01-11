@@ -31,27 +31,30 @@ const ApproveOfferings: React.FC = () => {
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
+    if (!db) return;
     setLoading(true);
     try {
-      const agencySnap = await getDocs(collection(db, 'agencies'));
+      const agencySnap = await getDocs(collection(db!, 'agencies'));
       const agencyMap: Record<string, string> = {};
       agencySnap.forEach(doc => { agencyMap[doc.id] = (doc.data() as Agency).name_ar; });
 
-      const schoolsSnap = await getDocs(collection(db, 'schools'));
+      const schoolsSnap = await getDocs(collection(db!, 'schools'));
       setSchools(schoolsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as School)));
 
-      const servicesQuery = query(collection(db, 'agency_services'), where('approval_status', '==', ApprovalStatus.PENDING));
+      const servicesQuery = query(collection(db!, 'agency_services'), where('approval_status', '==', ApprovalStatus.PENDING));
       const servicesSnap = await getDocs(servicesQuery);
       setServices(servicesSnap.docs.map(doc => {
         const data = doc.data() as AgencyService;
-        return { id: doc.id, ...data, agency_name: agencyMap[data.agency_id] };
+        const { id: _, ...rest } = data;
+        return { id: doc.id, ...rest, agency_name: agencyMap[data.agency_id] };
       }));
 
-      const initiativesQuery = query(collection(db, 'initiatives'), where('status', '==', InitiativeStatus.PENDING_APPROVAL));
+      const initiativesQuery = query(collection(db!, 'initiatives'), where('status', '==', InitiativeStatus.PENDING_APPROVAL));
       const initiativesSnap = await getDocs(initiativesQuery);
       setInitiatives(initiativesSnap.docs.map(doc => {
         const data = doc.data() as Initiative;
-        return { id: doc.id, ...data, agency_name: agencyMap[data.agency_id] };
+        const { id: _, ...rest } = data;
+        return { id: doc.id, ...rest, agency_name: agencyMap[data.agency_id] };
       }));
     } catch (error) { console.error(error); } 
     finally { setLoading(false); }
@@ -78,11 +81,11 @@ const ApproveOfferings: React.FC = () => {
   };
 
   const handleConfirmApprove = async () => {
-    if (!selectedItem) return;
+    if (!selectedItem || !db) return;
     setProcessing(true);
     try {
       const collectionName = selectedItem.type === 'service' ? 'agency_services' : 'initiatives';
-      const docRef = doc(db, collectionName, selectedItem.id);
+      const docRef = doc(db!, collectionName, selectedItem.id);
       const targetData = targetType === 'ALL' ? ['ALL'] : selectedSchoolIds;
       const updateData: any = { target_schools: targetData };
 
@@ -97,10 +100,10 @@ const ApproveOfferings: React.FC = () => {
   };
 
   const handleReject = async () => {
-    if (!selectedItem || !window.confirm("هل أنت متأكد من رفض هذا العنصر؟")) return;
+    if (!selectedItem || !db || !window.confirm("هل أنت متأكد من رفض هذا العنصر؟")) return;
     try {
       const collectionName = selectedItem.type === 'service' ? 'agency_services' : 'initiatives';
-      const docRef = doc(db, collectionName, selectedItem.id);
+      const docRef = doc(db!, collectionName, selectedItem.id);
       const updateData: any = {};
       if (selectedItem.type === 'service') updateData.approval_status = ApprovalStatus.REJECTED;
       else updateData.status = InitiativeStatus.REJECTED;

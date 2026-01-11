@@ -15,4 +15,15 @@ export const auth = isFirebaseConfigured ? getAuth(app) : null;
 export const db = isFirebaseConfigured ? getFirestore(app) : null;
 export const storage = isFirebaseConfigured ? getStorage(app) : null;
 
+// Helper functions to ensure non-null values (for TypeScript)
+export const getDb = () => {
+  if (!db) throw new Error('Firestore is not initialized');
+  return db;
+};
+
+export const getStorageInstance = () => {
+  if (!storage) throw new Error('Storage is not initialized');
+  return storage;
+};
+
 export default app;

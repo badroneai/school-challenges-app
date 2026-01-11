@@ -42,9 +42,9 @@ const AnalyticsDashboard: React.FC = () => {
     // 1. جلب العدادات السريعة (Fast Counts)
     const fetchQuickStats = async () => {
       try {
-        const schoolsColl = collection(db, 'schools');
-        const challengesColl = collection(db, 'challenges');
-        const eventsColl = collection(db, 'internal_events');
+        const schoolsColl = collection(db!, 'schools');
+        const challengesColl = collection(db!, 'challenges');
+        const eventsColl = collection(db!, 'internal_events');
 
         const [schoolsSnap, challengesSnap, eventsSnap] = await Promise.all([
           getCountFromServer(schoolsColl),
@@ -70,10 +70,10 @@ const AnalyticsDashboard: React.FC = () => {
       try {
         // نستخدم Limit للحد من كمية البيانات المحملة للرسوم البيانية
         // في النسخة الكاملة يفضل استخدام Cloud Functions لحساب هذه القيم وتخزينها
-        const submissionsSnap = await getDocs(collection(db, 'submissions'));
-        const internalEventsSnap = await getDocs(query(collection(db, 'internal_events'), limit(500))); 
-        const schoolsSnap = await getDocs(collection(db, 'schools'));
-        const challengesSnap = await getDocs(collection(db, 'challenges'));
+        const submissionsSnap = await getDocs(collection(db!, 'submissions'));
+        const internalEventsSnap = await getDocs(query(collection(db!, 'internal_events'), limit(500))); 
+        const schoolsSnap = await getDocs(collection(db!, 'schools'));
+        const challengesSnap = await getDocs(collection(db!, 'challenges'));
 
         const schoolsMap: Record<string, string> = {};
         schoolsSnap.forEach(doc => schoolsMap[doc.id] = doc.data().name_ar);
@@ -129,8 +129,8 @@ const AnalyticsDashboard: React.FC = () => {
         ]);
 
         // 3. جلب آخر النشاطات (Optimized Query)
-        const recentSubmissionsQuery = query(collection(db, 'submissions'), orderBy('date', 'desc'), limit(3));
-        const recentEventsQuery = query(collection(db, 'internal_events'), orderBy('date', 'desc'), limit(3));
+        const recentSubmissionsQuery = query(collection(db!, 'submissions'), orderBy('date', 'desc'), limit(3));
+        const recentEventsQuery = query(collection(db!, 'internal_events'), orderBy('date', 'desc'), limit(3));
         
         const [recentSub, recentEvt] = await Promise.all([
             getDocs(recentSubmissionsQuery),

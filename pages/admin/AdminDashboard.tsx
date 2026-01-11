@@ -18,11 +18,12 @@ const AdminDashboard: React.FC = () => {
     const [cityData, setCityData] = useState<any[]>([]);
 
     useEffect(() => {
+        if (!db) return;
         const fetchStats = async () => {
             try {
-                const schoolsSnapshot = await getDocs(collection(db, 'schools'));
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                const agenciesSnapshot = await getDocs(collection(db, 'agencies'));
+                const schoolsSnapshot = await getDocs(collection(db!, 'schools'));
+                const usersSnapshot = await getDocs(collection(db!, 'users'));
+                const agenciesSnapshot = await getDocs(collection(db!, 'agencies'));
 
                 const cityCounts: { [key: string]: number } = {};
                 schoolsSnapshot.docs.forEach(doc => {

@@ -43,9 +43,7 @@ registerRoute(
   ({ url }) => url.origin.includes('googleapis.com'),
   new NetworkFirst({
     cacheName: 'firebase-api',
-    options: {
-        networkTimeoutSeconds: 5,
-    }
+    networkTimeoutSeconds: 5,
   })
 );
 
