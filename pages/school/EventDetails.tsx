@@ -169,7 +169,7 @@ const EventDetails: React.FC = () => {
                         <MetaItem label="حالة التنسيق" value={getEventStatusText(event.status as any)} />
                     </dl>
                     <div className="mt-8">
-                        <label className="block text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest">تحديث الحالة يدوياً</dt>
+                        <label className="block text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest">تحديث الحالة يدوياً</label>
                         <Select label="" value={event.status} onChange={e => handleStatusChange(e.target.value as EventStatus)} disabled={isUpdating} className="rounded-xl border-slate-100 shadow-sm font-black text-xs">
                             {EVENT_STATUSES.map(s => <option key={s} value={s}>{getEventStatusText(s)}</option>)}
                         </Select>
